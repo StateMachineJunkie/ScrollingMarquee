@@ -8,25 +8,51 @@
 
 import UIKit
 
+/// Notification callbacks indicating basic state transitions of the `ScrollingMarquee`.
 protocol ScrollingMarqueeDelegate {
+    /// The scroll animation has been initiated. If the delay parameter of the
+    /// animations has been configured, it will be passed in as the `delay`
+    /// parameter of this notificaiton callback.
     func scrollingMarquee(marquee: ScrollingMarquee, didBeginScrollingWithDelay delay: NSTimeInterval)
+    
+    /// The scroll animation has ended either due to interruption or completion.
+    /// The `finished` parameter indicates which.
     func scrollingMarquee(marquee: ScrollingMarquee, didEndScrolling finished: Bool)
 }
 
 class ScrollingMarquee: UIView {
+    /// ScrollingMarquee supports three types of subtly different behavior.
+    /// `BestFit`, `Circular`, and `FullExit`. The behaviors are described below.
     enum Mode {
+        /// Display the text starting at the left extent of the control and
+        /// scroll until the entire content of the string is visible on the
+        /// right extent.
         case BestFit
+        /// Scroll the text in from the right and continue scrolling intil the
+        /// entire length of the text scrolls out on the left.
         case Circular
+        /// Display the text starting at the left extent of the control and
+        /// scroll until the entire length of the text has exited on the left.
         case FullExit
     }
     
+    /// The scroll animation can be configured with one three arbitrarily chosen
+    /// values. These values are in points per second (PPS) but we simply know
+    /// them as `Slow`, `Medium`, and `Fast`. Each doubles the speed of the
+    /// previous value, respectively.
     enum Speed : CGFloat {
+        /// 40 PPS
         case Slow = 40.0
+        /// 80 PPS
         case Medium = 80.0
+        /// 160 PPS
         case Fast = 160.0
     }
     
     // MARK: - Properties
+    
+    /// Indicates whether or not scrolling starts automatically when the value
+    /// of the `text` property is changed.
     var automaticMode: Bool = false
     
     override var backgroundColor: UIColor?{
@@ -38,28 +64,49 @@ class ScrollingMarquee: UIView {
         }
     }
     
+    /// Number of seconds to delay before actually scrolling animation begins.
+    /// Fractional values are allowed.
     var delay: NSTimeInterval = 0
     
+    /// Delegate object that will be notified when the scrolling animation
+    /// begins and ends.
     var delegate: ScrollingMarqueeDelegate?
     
+    /// Font used to display the marquee. If not is specified, the default font
+    /// is `system`.
     var font: UIFont! {
         get { return label.font }
         set(value) { self.label.font = value }
     }
     
+    // Used for implementation
     private var label: UILabel
     
+    /// Determines scrolling behavior. See `Mode` enum for details. Defualt value
+    /// is `BestFit`.
     var mode: Mode = .BestFit
-    var scrollSpeed: Speed = .Slow  // points per second
-    // TODO: Add didSet for immediate change on scrollSpeed assignment
     
+    /// Determines scrolling speed. See `Speed` enum for details. Default value
+    /// is `Slow`.
+    var scrollSpeed: Speed = .Slow  // points per second
+    
+    // TODO: Add didSet for immediate change to animation on scrollSpeed assignment.
+    
+    /// Indicates whether or not scrolling is current turned on.
     private(set) var scrollingEnabled: Bool = false
+    
+    /// Indicates whether or not scrolling animation is in progress.
     private(set) var scrollInProgress: Bool = false
     
+    /// Determine if scrolling is necessary given the current value of the `text`
+    /// property.
     private var scrollRequired: Bool {
         return frame.size.width < label.frame.size.width
     }
     
+    /// Text to be displayed in the marquee. If the displayed content of this
+    /// value is not wider than the width of the marquee controll, no scrolling
+    /// will occurr and attempts to start scrolling will have no effect.
     var text: String? {
         get { return self.label.text }
         set(value) {
@@ -80,6 +127,7 @@ class ScrollingMarquee: UIView {
         }
     }
     
+    /// Color of the text displayed in the marquee. The default value is black.
     var textColor: UIColor! {
         get { return self.label.textColor }
         set { self.label.textColor = newValue }
@@ -137,6 +185,11 @@ class ScrollingMarquee: UIView {
     }
     
     // MARK: - Public Methods
+    
+    /// Start the scrolling animation. This method will only have an effect if
+    /// the `text` property has a valid string that is longer than the width of
+    /// the control. If scrolling has already been turned on, this method does
+    /// nothing.
     func startScrolling() {
         guard scrollRequired == true else { return }
         
@@ -219,6 +272,10 @@ class ScrollingMarquee: UIView {
         }
     }
     
+    /// Turn off scrolling for this control. When invoked, this method will prevent
+    /// a currently executing scrolling animation from being automatically repeated.
+    /// If there is an animation in progress, there is no apparent imediate effect
+    /// to its invocation.
     func stopScrolling() {
         // On the next animation cycle, this will prevent us from restarting the scroll
         // animation.
@@ -226,7 +283,7 @@ class ScrollingMarquee: UIView {
     }
     
     // MARK: - Implementation Methods
-    func restartScrolling() {
+    private func restartScrolling() {
         // If scrolling is still enabled and is required by the length of the label,
         // restart the scrolling animation.
         if true == scrollingEnabled {
