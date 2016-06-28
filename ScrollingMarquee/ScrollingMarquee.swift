@@ -82,7 +82,7 @@ class ScrollingMarquee: UIView {
     
     var textColor: UIColor! {
         get { return self.label.textColor }
-        set { self.label.textColor = textColor }
+        set { self.label.textColor = newValue }
     }
     
     // MARK: - Initialization
