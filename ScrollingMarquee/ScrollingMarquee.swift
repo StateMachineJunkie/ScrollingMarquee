@@ -12,84 +12,100 @@ import UIKit
 protocol ScrollingMarqueeDelegate {
     /// The scroll animation has been initiated. If the delay parameter of the
     /// animations has been configured, it will be passed in as the `delay`
-    /// parameter of this notificaiton callback.
-    func scrollingMarquee(marquee: ScrollingMarquee, didBeginScrollingWithDelay delay: NSTimeInterval)
-    
+    /// parameter of this notification callback.
+    func scrollingMarquee(_ marquee: ScrollingMarquee, didBeginScrollingWithDelay delay: TimeInterval)
+
     /// The scroll animation has ended either due to interruption or completion.
     /// The `finished` parameter indicates which.
-    func scrollingMarquee(marquee: ScrollingMarquee, didEndScrolling finished: Bool)
+    func scrollingMarquee(_ marquee: ScrollingMarquee, didEndScrolling finished: Bool)
 }
 
+@IBDesignable
 class ScrollingMarquee: UIView {
+    enum Error: Swift.Error {
+        // The text to be displayed fits within the constrained label width.
+        case scrollingNotRequired
+    }
+
     /// ScrollingMarquee supports three types of subtly different behavior.
     /// `BestFit`, `Circular`, and `FullExit`. The behaviors are described below.
-    enum Mode {
+    enum Mode: Int {
         /// Display the text starting at the left extent of the control and
         /// scroll until the entire content of the string is visible on the
         /// right extent.
-        case BestFit
-        /// Scroll the text in from the right and continue scrolling intil the
+        case bestFit
+        /// Scroll the text in from the right and continue scrolling until the
         /// entire length of the text scrolls out on the left.
-        case Circular
+        case circular
         /// Display the text starting at the left extent of the control and
         /// scroll until the entire length of the text has exited on the left.
-        case FullExit
+        case fullExit
     }
     
     /// The scroll animation can be configured with one three arbitrarily chosen
     /// values. These values are in points per second (PPS) but we simply know
     /// them as `Slow`, `Medium`, and `Fast`. Each doubles the speed of the
     /// previous value, respectively.
-    enum Speed : CGFloat {
+    enum Speed: CGFloat {
         /// 40 PPS
-        case Slow = 40.0
+        case slow = 40.0
         /// 80 PPS
-        case Medium = 80.0
+        case medium = 80.0
         /// 160 PPS
-        case Fast = 160.0
+        case fast = 160.0
     }
     
     // MARK: - Properties
     
     /// Indicates whether or not scrolling starts automatically when the value
     /// of the `text` property is changed.
-    var automaticMode: Bool = false
-    
-    override var backgroundColor: UIColor?{
-        get {
-            return label.backgroundColor
-        }
-        set(value) {
-            label.backgroundColor = value
-        }
+    @IBInspectable var automaticMode: Bool = false
+
+    @IBInspectable override var backgroundColor: UIColor? {
+        get { return label.backgroundColor }
+        set { label.backgroundColor = newValue }
     }
     
     /// Number of seconds to delay before actually scrolling animation begins.
     /// Fractional values are allowed.
-    var delay: NSTimeInterval = 0
-    
+    @IBInspectable var delay: TimeInterval = 0
+
     /// Delegate object that will be notified when the scrolling animation
     /// begins and ends.
     var delegate: ScrollingMarqueeDelegate?
     
     /// Font used to display the marquee. If not is specified, the default font
     /// is `system`.
-    var font: UIFont! {
+    @IBInspectable var font: UIFont! {
         get { return label.font }
-        set(value) { self.label.font = value }
+        set { self.label.font = newValue }
     }
     
     // Used for implementation
-    private var label: UILabel
-    
-    /// Determines scrolling behavior. See `Mode` enum for details. Defualt value
+    private var label: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    /// Determines scrolling behavior. See `Mode` enum for details. Default value
     /// is `BestFit`.
-    var mode: Mode = .BestFit
-    
+    var mode: Mode = .bestFit
+
+    @IBInspectable var modeAdapter: Int {
+        get { mode.rawValue }
+        set(modeIndex) { mode = Mode(rawValue: modeIndex) ?? .bestFit }
+    }
+
     /// Determines scrolling speed. See `Speed` enum for details. Default value
     /// is `Slow`.
-    var scrollSpeed: Speed = .Slow  // points per second
-    
+    var scrollSpeed: Speed = .slow  // points per second
+
+    @IBInspectable var scrollSpeedAdapter: CGFloat {
+        get { scrollSpeed.rawValue }
+        set(scrollSpeedIndex) { scrollSpeed = Speed(rawValue: scrollSpeedIndex) ?? .slow }
+    }
+
     // TODO: Add didSet for immediate change to animation on scrollSpeed assignment.
     
     /// Indicates whether or not scrolling is current turned on.
@@ -105,15 +121,15 @@ class ScrollingMarquee: UIView {
     }
     
     /// Text to be displayed in the marquee. If the displayed content of this
-    /// value is not wider than the width of the marquee controll, no scrolling
-    /// will occurr and attempts to start scrolling will have no effect.
-    var text: String? {
+    /// value is not wider than the width of the marquee control, no scrolling
+    /// will occur and attempts to start scrolling will have no effect.
+    @IBInspectable var text: String? {
         get { return self.label.text }
-        set(value) {
-            // re-calculate and resize label according ot the width of the new text value
-            guard let text = value else { return }
-            
-            let textSize = text.sizeWithAttributes([NSFontAttributeName: label.font])
+        set {
+            // re-calculate and resize label according to the width of the new text value
+            guard let text = newValue else { return }
+
+            let textSize = text.size(withAttributes: [NSAttributedString.Key.font : label.font!])
             var frame = CGRectZero
             frame.size = CGSize(width: textSize.width, height: textSize.height)
             label.frame = frame
@@ -122,13 +138,14 @@ class ScrollingMarquee: UIView {
             self.label.text = text
             
             if automaticMode {
-                startScrolling()
+                try? startScrolling()
             }
         }
     }
     
-    /// Color of the text displayed in the marquee. The default value is black.
-    var textColor: UIColor! {
+    /// Color of the text displayed in the marquee. The default value is the system's `UILabel` color, which adapts
+    /// dynamically to Dark Mode changes. Setting this property to `nil` causes it to be reset to the default value.
+    @IBInspectable var textColor: UIColor! {
         get { return self.label.textColor }
         set { self.label.textColor = newValue }
     }
@@ -147,52 +164,50 @@ class ScrollingMarquee: UIView {
     }
     
     init(frame: CGRect, font: UIFont?, text: String?) {
-        precondition(frame.size.width > 0 && frame.size.height > 0,
-                     "The initial frame must not have zero width or height!")
-        
+        super.init(frame: frame)
+
         let label = UILabel(frame: CGRectZero)
-        
-        if let font = font {
+
+        if let font {
             label.font = font
         } else {
-            label.font = UIFont.systemFontOfSize(frame.size.height * 0.8)
+            label.font = UIFont.systemFont(ofSize: frame.size.height * 0.8)
         }
-        
+
         // calculate width of text, if provided
-        if let text = text {
+        if let text {
             label.text = text
-            let textSize = text.sizeWithAttributes([NSFontAttributeName: label.font])
-            // allocate label and size it based on the height of frame and width of text
-            let textFrame = CGRect(x: 0, y: 0, width: textSize.width, height: textSize.height)
-            label.frame = textFrame
+            label.frame = computeMarqueeFrame(for: label)
         }
-        
+
         self.label = label
-        super.init(frame: frame)
-        self.addSubview(label)
-        
-        // default to transparent background with black text
-        super.backgroundColor = UIColor.clearColor()
-        label.backgroundColor = UIColor.clearColor()
-        label.textColor = UIColor.blackColor()
-        
-        // make sure clipping is in effect
-        self.clipsToBounds = true
+        commonInit()
     }
     
     required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
+        // calculate width of text, if provided
+        label.frame = computeMarqueeFrame(for: label)
+        commonInit()
     }
-    
+
+    // MARK - UIView Overrides
+
+    override var intrinsicContentSize: CGSize {
+        label.intrinsicContentSize
+    }
+
+    override class var requiresConstraintBasedLayout: Bool { true }
+
     // MARK: - Public Methods
     
     /// Start the scrolling animation. This method will only have an effect if
     /// the `text` property has a valid string that is longer than the width of
     /// the control. If scrolling has already been turned on, this method does
     /// nothing.
-    func startScrolling() {
-        guard scrollRequired == true else { return }
-        
+    func startScrolling() throws {
+        guard scrollRequired == true else { throw Error.scrollingNotRequired }
+
         // Scrolling has been requested. If a scroll animation is already in progress,
         // do not proceed but let it finish. If not, we may proceed by determining where
         // the animation must start, what speed it should run at, and where the animation
@@ -206,7 +221,7 @@ class ScrollingMarquee: UIView {
             if CGRectGetMinX(label.frame) != 0.0 {
                 var frame = label.frame
                 
-                if .Circular == mode {
+                if .circular == mode {
                     frame.origin.x = self.bounds.size.width
                 } else {
                     frame.origin.x = 0.0
@@ -219,10 +234,10 @@ class ScrollingMarquee: UIView {
             // the label frame, if we get this far).
             var offset: CGFloat = 0
             
-            if .BestFit == mode {
+            if .bestFit == mode {
                 // calculate offset for best-fit
                 offset = ((label.bounds.size.width - self.bounds.size.width) + 10.0)
-            } else if .Circular == mode {
+            } else if .circular == mode {
                 // calculate offset for circular mode
                 offset = label.bounds.size.width + 10.0
                 
@@ -239,29 +254,29 @@ class ScrollingMarquee: UIView {
             newLabelFrame.origin.x -= offset
             
             // perform animation
-            UIView.animateWithDuration(NSTimeInterval(duration), delay: delay, options: .CurveLinear, animations: {
+            UIView.animate(withDuration: TimeInterval(duration), delay: delay, options: .curveLinear, animations: {
                 self.label.frame = newLabelFrame
                 if let delegate = self.delegate {
-                    dispatch_async(dispatch_get_main_queue(), {
+                    DispatchQueue.main.async {
                         delegate.scrollingMarquee(self, didBeginScrollingWithDelay: self.delay)
-                    })
+                    }
                 }
             }, completion: { finished in
                 if let delegate = self.delegate {
-                    dispatch_async(dispatch_get_main_queue(), {
+                    DispatchQueue.main.async {
                         delegate.scrollingMarquee(self, didEndScrolling: finished)
-                    })
+                    }
                 }
                 // Our scroll animation has stopped either because it finished or
-                // becaue UIKit stopped it prematurely (usually due to the view
+                // because UIKit stopped it prematurely (usually due to the view
                 // disappearing). In either case we want to reflect the stopped state
                 // and, if it makes sense, restart the scrolling animation.
                 self.scrollInProgress = false
                 
                 if finished {
-                    dispatch_async(dispatch_get_main_queue(), {
-                        self.restartScrolling()
-                    })
+                    DispatchQueue.main.async {
+                        try? self.restartScrolling()
+                    }
                 }
             })
         } else {
@@ -274,7 +289,7 @@ class ScrollingMarquee: UIView {
     
     /// Turn off scrolling for this control. When invoked, this method will prevent
     /// a currently executing scrolling animation from being automatically repeated.
-    /// If there is an animation in progress, there is no apparent imediate effect
+    /// If there is an animation in progress, there is no apparent immediate effect
     /// to its invocation.
     func stopScrolling() {
         // On the next animation cycle, this will prevent us from restarting the scroll
@@ -283,11 +298,37 @@ class ScrollingMarquee: UIView {
     }
     
     // MARK: - Implementation Methods
-    private func restartScrolling() {
+    private func commonInit() {
+        translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+
+        // This view should match the height of the label it uses for implementation.
+        NSLayoutConstraint.activate([
+            topAnchor.constraint(equalTo: label.topAnchor),
+            bottomAnchor.constraint(equalTo: label.bottomAnchor)
+        ])
+
+        // default to transparent background with black text
+        super.backgroundColor = .clear
+        label.backgroundColor = .clear
+        label.textColor = .black
+
+        // make sure clipping is in effect
+        self.clipsToBounds = true
+    }
+
+    private func computeMarqueeFrame(for label: UILabel) -> CGRect {
+        guard let text = label.text else { return .zero }
+        let textSize = text.size(withAttributes: [NSAttributedString.Key.font: label.font!])
+        // allocate label and size it based on the height of frame and width of text
+        return CGRect(x: 0, y: 0, width: textSize.width, height: textSize.height)
+    }
+
+    private func restartScrolling() throws {
         // If scrolling is still enabled and is required by the length of the label,
         // restart the scrolling animation.
         if true == scrollingEnabled {
-            startScrolling()
+            try startScrolling()
         } else {
             // since we are not going to continue scrolling, reset the label to the
             // default position.

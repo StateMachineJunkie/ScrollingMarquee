@@ -1,25 +1,93 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6211" systemVersion="14A298i" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22138.1" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6204"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22113"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="ScrollingMarquee" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    <view key="view" contentMode="scaleToFill" layoutMarginsFollowReadableWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2HW-NQ-Jwp" userLabel="Scrolling Marquee" customClass="ScrollingMarquee" customModule="ScrollingMarquee" customModuleProvider="target">
+                                <rect key="frame" x="31" y="426" width="331" height="0.0"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="modeAdapter">
+                                        <integer key="value" value="1"/>
+                                    </userDefinedRuntimeAttribute>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="scrollSpeedAdapter">
+                                        <real key="value" value="1"/>
+                                    </userDefinedRuntimeAttribute>
+                                    <userDefinedRuntimeAttribute type="string" keyPath="text" value="This is a relatively long setence that I'm displaying in my new control."/>
+                                </userDefinedRuntimeAttributes>
+                            </view>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="57z-Oy-hoS">
+                                <rect key="frame" x="16" y="67" width="361" height="32"/>
+                                <segments>
+                                    <segment title="Best Fit"/>
+                                    <segment title="Circular"/>
+                                    <segment title="Full Exit"/>
+                                </segments>
+                                <connections>
+                                    <action selector="modeSelectionDidChange:" destination="BYZ-38-t0r" eventType="valueChanged" id="yXb-ho-gs8"/>
+                                </connections>
+                            </segmentedControl>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="RXA-EW-TMC">
+                                <rect key="frame" x="16" y="106" width="361" height="32"/>
+                                <segments>
+                                    <segment title="" image="tortoise" catalog="system"/>
+                                    <segment title="" image="dog" catalog="system"/>
+                                    <segment title="" image="hare" catalog="system"/>
+                                </segments>
+                                <connections>
+                                    <action selector="speedSelectionDidChange:" destination="BYZ-38-t0r" eventType="valueChanged" id="OsE-tf-8l5"/>
+                                </connections>
+                            </segmentedControl>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="2HW-NQ-Jwp" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="CUS-mm-olL"/>
+                            <constraint firstItem="RXA-EW-TMC" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="ECR-yL-C2T"/>
+                            <constraint firstItem="57z-Oy-hoS" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="8" symbolic="YES" id="Pvg-zh-qLP"/>
+                            <constraint firstItem="2HW-NQ-Jwp" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="15" id="Q2P-nv-HXB"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="2HW-NQ-Jwp" secondAttribute="trailing" constant="15" id="gup-zx-dlE"/>
+                            <constraint firstItem="RXA-EW-TMC" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="jS6-0g-h0P"/>
+                            <constraint firstItem="RXA-EW-TMC" firstAttribute="top" secondItem="57z-Oy-hoS" secondAttribute="bottom" constant="8" symbolic="YES" id="pAe-6Y-idy"/>
+                            <constraint firstItem="57z-Oy-hoS" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="u8s-4X-nHJ"/>
+                            <constraint firstItem="2HW-NQ-Jwp" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="uFF-N0-pFb"/>
+                            <constraint firstItem="57z-Oy-hoS" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="zOW-jV-vey"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="modeSelector" destination="57z-Oy-hoS" id="Q5m-g9-u9d"/>
+                        <outlet property="sm" destination="2HW-NQ-Jwp" id="PE9-5b-3YX"/>
+                        <outlet property="speedSelector" destination="RXA-EW-TMC" id="gQv-a9-xR0"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="138.1679389312977" y="-2.1126760563380285"/>
         </scene>
     </scenes>
+    <designables>
+        <designable name="2HW-NQ-Jwp"/>
+    </designables>
+    <resources>
+        <image name="dog" catalog="system" width="128" height="99"/>
+        <image name="hare" catalog="system" width="128" height="89"/>
+        <image name="tortoise" catalog="system" width="128" height="65"/>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
 </document>

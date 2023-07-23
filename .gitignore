@@ -25,6 +25,7 @@ xcuserdata
 *.xcscmblueprint
 .DS_Store
 .svn
+*xcshareddata*
 
 ## Obj-C/Swift specific
 *.hmap
